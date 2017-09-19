@@ -156,4 +156,6 @@ dll_code dll_size(dll_node_ptr head, uint32_t* size);
  * ----------------------------------------------------------------------------
  */
 dll_code dll_search(dll_node_ptr head, uint32_t data, uint32_t* position);
+/*add some documentation soon*/
+dll_code dll_dump(dll_node_ptr head);
 #endif

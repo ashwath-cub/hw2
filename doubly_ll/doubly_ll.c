@@ -12,16 +12,17 @@
 #include "doubly_ll.h"
 #include<stdint.h>
 #include<stdlib.h>
+#include<stdio.h>
 
+//#define DEBUG
 
 /*								                
  * Function:     dll_add_node(dll_node_ptr* head, uint32_t data, uint32_t position)
  * -----------------------------------------------------------------------------
- * Description:  Assigns memory specified by 'size' to the circular buffer 
- *               structure pointed to by the pointer argument on the heap. 
- *               Also initialises various parameters to this buffer, like the 
- *               head, tail, total size, and size_occupied, etc.  
- *              
+ * Description:  Addes a new node to the dll with the head ptr *head at position 
+ *               and also assigns data to the node. Creates the dll if position
+ *               0 is specified with the head, and a NULL ptr for head node is
+ *               detected.
  *           
  * Usage:        Pass a pointer to the pointer to the head node of the ll.
  *               If the linked list does not exit, pass a pointer to NULL
@@ -31,11 +32,8 @@
  * 
  * Returns:      Error codes:
  *               DLL_NULL_POINTER: The pointer passed is detected to be a 
- *               null. The function halts execution and returns w/o completion.   
- *                  
- *               DLL_BAD_DATA: The size parameter is less than or equal 
- *               to zero.
- *               
+ *               null. The function halts execution and returns w/o completion. 
+ *        
  *               DLL_MALLOC_FAIL: The call to malloc fails.
  *
  *               DLL_SUCCESS: The funcion returns successfully.
@@ -74,26 +72,49 @@ dll_code dll_add_node(dll_node_ptr* head, uint32_t position, uint32_t data)
     {
          dll_node_ptr tmp_head=*head;
          uint32_t index;
+         /*check if given position is valid*/
+         uint32_t size;
+         dll_code size_rc=dll_size(tmp_head, &size);
 
+         if(size_rc!=DLL_NULL_PTR)                                                   //only fail rc for dll_size
+         {
+              if(position>size)                                                    //the position cannot be 2 for a dll of size 2; position starts from 0
+                   return DLL_BAD_POSITION;
+         }    
+         else
+	      return DLL_NULL_PTR;
+#ifdef DEBUG 
+         printf("before traversing to p-1\n"); 
+#endif
 	 /*go to index=position-1 in the dll*/
 	 for(index=0; index<position-1; index++)
               tmp_head=tmp_head->next_ptr; 
-         
-         dll_node_ptr new_node=(dll_node_ptr)malloc(sizeof(dll_node));      //allocate memory
+
+#ifdef DEBUG         
+         printf("after traversing to p-1\n"); 
+#endif
+
+	 dll_node_ptr new_node=(dll_node_ptr)malloc(sizeof(dll_node));      //allocate memory
 	 
 	 /*malloc check*/
 	 if(new_node==NULL)
 	      return DLL_MALLOC_FAIL;
          
+	 new_node->data=data;
+
 	 /*link the new node to the nodes before and after it in the dll*/
 	 new_node->prev_ptr=tmp_head;
 	 new_node->next_ptr=tmp_head->next_ptr;
         
 	 /*link the nodes surrounding the new node to the new node*/ 
          tmp_head->next_ptr=new_node;
-	 (new_node->next_ptr)->prev_ptr=new_node;
-
-         return DLL_SUCCESS;                          //return successfully
+	 
+	 if(new_node->next_ptr!=NULL)
+	      (new_node->next_ptr)->prev_ptr=new_node;
+#ifdef DEBUG 
+         printf("after making all the assignments\n"); 
+#endif
+	 return DLL_SUCCESS;                          //return successfully
     } 
 }	
 
@@ -313,3 +334,44 @@ dll_code dll_search(dll_node_ptr head, uint32_t data, uint32_t* position)
     }
 }
 
+/*								                
+ * Function:     dll_dump(dll_node_ptr head)
+ * -----------------------------------------------------------------------------
+ * Description:  Prints out all the elements of the linked list in a readable
+ *               manner.
+ *               
+ * Usage:        Pass the pointer to the head node of the linked list to have
+ *               all the data elements printed out sequentially.                
+ *
+ * Returns:      Error codes:
+ *               DLL_NULL_PTR: The pointer passed to the function is a
+ *               NULL and is thus invalid. The function prints message to stdout 
+ *               and returns.
+ *
+ *               DLL_SUCCESS: The function completes execution 
+ *               successfully.
+ * ----------------------------------------------------------------------------
+ */
+dll_code dll_dump(dll_node_ptr head)
+{
+    /*check if the linked list exists*/
+    if(head==NULL)
+    {	 
+	 printf("This linked list does not exist- call add_node with position zero. Thanks.\n");
+         return DLL_NULL_PTR;
+    }
+    /*create temporary variable to traverse the dll*/
+    dll_node_ptr temp=head;
+    
+    /*print each data element in a readable manner until you reach NULL*/
+    while(temp!=NULL)
+    {
+         printf("%u -> ",temp->data);
+	 temp=temp->next_ptr;
+    }
+    /*end the printing with NULL*/ 
+    printf("NULL\n");
+    
+    /*return successfully*/
+    return DLL_SUCCESS;
+}

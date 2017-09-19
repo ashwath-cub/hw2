@@ -180,23 +180,26 @@ dll_code dll_destroy(dll_node_ptr head)
  *               DLL_SUCCESS: The function completes execution successfully   
  * ----------------------------------------------------------------------------
  */
-dll_code dll_remove_node(dll_node_ptr head, uint32_t position, uint32_t* data)
+dll_code dll_remove_node(dll_node_ptr* head, uint32_t position, uint32_t* data)
 {
     //basic pointer check; error handling	
     if(head==NULL)
 	 return DLL_NULL_PTR;
+    if(*head==NULL)
+	 return DLL_NULL_PTR;
 
-    dll_node_ptr tmp_head=head;                                                 //assign head to temp variable
+
+    dll_node_ptr tmp_head=*head;                                                 //assign head to temp variable
 
     /*handle position equals zero case*/	 
     if(position==0)
     {
          *data=tmp_head->data;                                                  //get node data in the input pointer parameter
 
-	 if(head->next_ptr!=NULL)                                               //if the next is NULL, the size is 1
+	 if((*head)->next_ptr!=NULL)                                               //if the next is NULL, the size is 1
 	 {    
-	      head=head->next_ptr;
-	      head->prev_ptr=NULL;
+	      *head=(*head)->next_ptr;
+	      (*head)->prev_ptr=NULL;
 	 }
 
 	 free(tmp_head);
@@ -352,12 +355,18 @@ dll_code dll_search(dll_node_ptr head, uint32_t data, uint32_t* position)
  *               successfully.
  * ----------------------------------------------------------------------------
  */
-dll_code dll_dump(dll_node_ptr head)
+dll_code dll_dump(dll_node_ptr head, FILE *fp)
 {
     /*check if the linked list exists*/
     if(head==NULL)
     {	 
-	 printf("This linked list does not exist- call add_node with position zero. Thanks.\n");
+	 printf("This linked list does not exist- call dll_dump with position zero. Thanks.\n");
+         return DLL_NULL_PTR;
+    }
+    if(fp==NULL)
+    {
+    
+	 printf("This file does not exist- initialise the file ptr using fopen. Thanks.\n");
          return DLL_NULL_PTR;
     }
     /*create temporary variable to traverse the dll*/
@@ -366,11 +375,11 @@ dll_code dll_dump(dll_node_ptr head)
     /*print each data element in a readable manner until you reach NULL*/
     while(temp!=NULL)
     {
-         printf("%u -> ",temp->data);
+         fprintf(fp, "%u -> ",temp->data);
 	 temp=temp->next_ptr;
     }
     /*end the printing with NULL*/ 
-    printf("NULL\n");
+    fprintf(fp, "NULL\n");
     
     /*return successfully*/
     return DLL_SUCCESS;

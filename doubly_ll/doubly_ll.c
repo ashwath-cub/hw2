@@ -15,7 +15,7 @@
 #include<stdio.h>
 
 //#define DEBUG
-
+//#define DEBUG_SEARCH 
 /*								                
  * Function:     dll_add_node(dll_node_ptr* head, uint32_t data, uint32_t position)
  * -----------------------------------------------------------------------------
@@ -315,19 +315,24 @@ dll_code dll_search(dll_node_ptr head, uint32_t data, uint32_t* position)
     
     /*this variable keeps track of the position*/
     uint32_t count=0;
-    
+
+#ifdef DEBUG_SEARCH
+    printf("data requested:%u\n", data);
+#endif
     /*check the entire list to see if data is found*/
     while(tmp!=NULL)
     {
         if(tmp->data==data)                                                     //break out of the loop if data is found
 	      break;
+#ifdef DEBUG_SEARCH
+	printf("data:%u , position:%u\n", tmp->data,count);
+#endif	
 	count++;                                                                //increment count to track position of data
 	tmp=tmp->next_ptr;                                                      //move to the next node
     }
     
     if(tmp==NULL)                                                               //basically we reached the end of the dll- the break prevents this
     {	
-	position=NULL;
 	return DLL_DATA_MISSING;
     }	
     else                                                                        //data is found- return position safely

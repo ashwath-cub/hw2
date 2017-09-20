@@ -231,18 +231,101 @@ void test_remove_node()
               TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason");
          } 
     }
+
+    fprintf(fp, "\nInitiating a series of removes that are out of bounds\n"); 
+    /*updating the size variable again*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_size(head, &size), "Something's wrong with the size function");
+    /*attempt removing nodes at positions which are beyond the dll*/
+    for(index=0; index<10; index++)
+    {
+	 position=size+index;	     //this way the position is always out of bounds
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_BAD_POSITION, dll_remove_node(&head, position, &data), "rc!=bad position when position>size remove is requested");
+         fprintf(fp,"\nAfter trying to removing the element at position:%u when the size is a max: %u\n", position, size); 
+         /*dump all the nodes that were allocated to this guy*/
+         TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason"); 
+    }
+    /*try to remove nodes from a dll that does not exist*/
+    head=NULL;
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_remove_node(&head, position, &data), "rc!=DLL_NULL_PTR when remove from a non existant dll is requested");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_remove_node(NULL, position, &data), "rc!=DLL_NULL_PTR when remove from a non existant dll is requested");
+    
 }
 
+void test_search(void)
+{
+
+    /*check creation of the dll first*/
+    dll_node_ptr head=NULL;
+    uint32_t position=0, data=0;
+    
+   
+    /*create the dll*/ 
+    dll_code add_node_rc=dll_add_node(&head, position, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to create new dll when it does not exist");
+    
+    fprintf(fp, "After calling dll_add_node to create the dll\n");
+    
+    /*dump all the nodes that were allocated to this guy*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason");
+    int index;
+    
+    /*use this guy to store all the data values that will be in the dll*/
+    uint32_t data_arr[16]; 
+    *data_arr=0;
+    /*build on this dll-add more nodes*/
+    for(index=0; index<15; index++)
+    {
+         position=index+1;
+	 *(data_arr + index+1)=(index+1)*5;
+	 add_node_rc=dll_add_node(&head, position, *(data_arr+ index+1));
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to add nodes at the end"); 
+    }
+    
+    fprintf(fp, "\nAfter creating a dll of size 16: \n"); 
+    /*dump all the nodes that were allocated to this guy*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason");
+    
+    fprintf(fp, "\nDemonstrating that the search function returns position accurately:\n");
+
+    /*attempt searching the dll for data that exists- this is why it made sense to store the data in an array before adding it to the dll*/
+    for(index=0; index<16; index++)
+    {
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_search(head, *(data_arr+index), &position), "rc!=DLL_SUCCESS when arguments are valid");
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(index, position, "position found is not valid");
+	 
+	 fprintf(fp,"\nFound data element %u, at position: %u\n", *(data_arr+index), position); 
+
+         /*dump all the nodes that were allocated to this guy*/
+         TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason"); 
+    }
+
+    /*attempt searching the dll for data that DNE*/
+    for(index=0; index<16; index++)
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_DATA_MISSING, dll_search(head, *(data_arr+index)+1, &position), "rc!=DLL_DATA_MISSING when arguments are valid");
+    
+    /*attempt searching for data in a dll that DNE*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_search(NULL, *(data_arr+index), &position), "rc!=DLL_NULL_PTR when arguments are invalid");
+
+    /*attempt searching for data when the pointer to the position is NULL*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_search(head, *(data_arr+index), NULL), "rc!=DLL_NULL_PTR when arguments are invalid");
+       
+}
 
 int main()
 {
-    fp=fopen(FILE_NAME, "a+");
+    fp=fopen(FILE_NAME, "a");
+
     UNITY_BEGIN();
     fprintf(fp, "\n\nUnit test for the dll_add_node function:\n\n");
     RUN_TEST(test_add_node);
 
     fprintf(fp, "\n\nUnit test for the dll_remove_node function:\n\n");
     RUN_TEST(test_remove_node);
+     
+    fprintf(fp, "\n\nUnit test for the search function:\n\n");
+    RUN_TEST(test_search);
+    
+    
     
     fclose(fp);
     return UNITY_END();

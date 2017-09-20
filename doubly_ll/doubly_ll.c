@@ -262,9 +262,14 @@ dll_code dll_remove_node(dll_node_ptr* head, uint32_t position, uint32_t* data)
 dll_code dll_size(dll_node_ptr head, uint32_t* size)
 {
     //basic pointer check; error handling	
-    if(head==NULL||size==NULL)
+    if(size==NULL)
          return DLL_NULL_PTR;
-    
+    if(head==NULL)
+    {
+         *size=0;
+	 return DLL_SUCCESS;
+    }
+
     dll_node_ptr tmp_head=head;                                                 //assign head to a temp variable
     uint32_t count=0;                                                           //initialise count to zero- this will track the dll's size
     
@@ -365,7 +370,7 @@ dll_code dll_dump(dll_node_ptr head, FILE *fp)
     /*check if the linked list exists*/
     if(head==NULL)
     {	 
-	 printf("This linked list does not exist- call dll_dump with position zero. Thanks.\n");
+	 printf("This linked list does not exist- call dll_add_node with position zero. Thanks.\n");
          return DLL_NULL_PTR;
     }
     if(fp==NULL)

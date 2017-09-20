@@ -3,7 +3,7 @@
 #include "doubly_ll.h"
 #include "Unity/src/unity.h"
 
-#define FILE_NAME "test_results.txt"
+#define FILE_NAME "results.txt"
 #define NON_ZERO_VALUE 12
 
 
@@ -311,6 +311,125 @@ void test_search(void)
        
 }
 
+void test_destory(void)
+{
+        
+    /*check creation of the dll first*/
+    dll_node_ptr head=NULL;
+    uint32_t position=0, data=13;
+    
+   
+    /*create the dll*/ 
+    dll_code add_node_rc=dll_add_node(&head, position, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to create new dll when it does not exist");
+    
+    int index;
+    
+    /*build on this dll-add more nodes*/
+    for(index=0; index<15; index++)
+    {
+         position=index+1;
+	 data=random()%300;
+	 add_node_rc=dll_add_node(&head, position, data);
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to add nodes at the end"); 
+    }
+     
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_destroy(head), "fails to destroy initialized dll");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_destroy(NULL), "rc!=DLL_NULL_PTR when a dll that DNE is tried to be destroyed");
+}
+
+void test_size()
+{
+    /*check creation of the dll first*/
+    dll_node_ptr head=NULL;
+    uint32_t position=0, data=13, expected_size=0;
+   
+    /*create the dll*/ 
+    dll_code add_node_rc=dll_add_node(&head, position, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to create new dll when it does not exist");
+    expected_size++;
+    int index;
+    
+    /*build on this dll-add more nodes*/
+    for(index=0; index<15; index++)
+    {
+         position=index+1;
+	 data=random()%300;
+	 add_node_rc=dll_add_node(&head, position, data);
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to add nodes at the end"); 
+         expected_size++;
+    }
+    uint32_t size_returned; 
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_size(head, &size_returned), "Something's wrong with the size function");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(expected_size, size_returned, "the size returned is incorrect");
+
+    /*remove nodes from the start*/
+    position=0;	 
+
+    for(index=0; index<10; index++)
+    {
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_remove_node(&head, position, &data), "Fails to remove nodes in the middle");
+         expected_size--;
+    }
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_size(head, &size_returned), "Something's wrong with the size function");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(expected_size, size_returned, "the size returned is incorrect");
+    
+    /*check corner cases- should return zero if the dll DNE*/  
+    expected_size=0;
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_size(NULL, &size_returned), "does not return zero when the dll DNE");
+    TEST_ASSERT_EQUAL_INT_MESSAGE(expected_size, size_returned, "the size returned is incorrect");
+
+    /*if the pointer to size is NULL, should halt execution and return apt rc*/  
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_size(head, NULL), "Something's wrong with the size function");
+}
+
+void test_dump(void)
+{
+    /*create the dll*/ 
+    dll_node_ptr head=NULL;
+    uint32_t position=0, data=13 ;
+   
+    dll_code add_node_rc=dll_add_node(&head, position, data);
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to create new dll when it does not exist");
+    int index;
+    fprintf(fp, "added data:%u, at position:%u, dump out:\n", data, position);
+
+    /*dump all the nodes that were allocated to this guy*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason"); 
+    /*build on this dll-add more nodes*/
+    for(index=0; index<15; index++)
+    {
+         position=index+1;
+	 data=random()%300;
+	 add_node_rc=dll_add_node(&head, position, data);
+	 TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, add_node_rc, "Fails to add nodes at the end"); 
+    
+         fprintf(fp, "\nadded data:%u, at position:%u\n", data, position);
+         /*dump all the nodes that were allocated to this guy*/
+         TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason"); 
+    }
+
+    
+    uint32_t size;
+    fprintf(fp, "\nInitiating a series of removes from the end\n"); 
+    /*remove nodes from the end*/
+    for(index=0; index<10; index++)
+    {
+         TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_size(head, &size), "Something's wrong with the size function");
+	 
+	 position=size-1;	     //this way the last node is referenced always 
+	 if(position<=size && position!=0) 
+	 {
+	      TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_remove_node(&head, position, &data), "Fails to remove nodes in the middle");
+              fprintf(fp,"\nAfter removing the data element:%u, at position:%u \n", data, position); 
+              /*dump all the nodes that were allocated to this guy*/
+              TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_SUCCESS, dll_dump(head, fp), "Dump fails for some random reason"); 
+         } 
+    }
+    /*lets call dump with a dll that DNE*/
+    TEST_ASSERT_EQUAL_INT_MESSAGE(DLL_NULL_PTR, dll_dump(NULL, fp), "rc!=DLL_NULL_PTR when null ptr is passed as head"); 
+}
+
 int main()
 {
     fp=fopen(FILE_NAME, "a");
@@ -325,7 +444,12 @@ int main()
     fprintf(fp, "\n\nUnit test for the search function:\n\n");
     RUN_TEST(test_search);
     
+    RUN_TEST(test_destory);
     
+    RUN_TEST(test_size); 
+
+    fprintf(fp, "\n\nUnit test for the dump function:\n\n");
+    RUN_TEST(test_dump);
     
     fclose(fp);
     return UNITY_END();
